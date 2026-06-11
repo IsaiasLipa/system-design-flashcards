@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>System Design Flashcards</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f1117; color: #e8eaf2; min-height: 100vh; }
+
+header { background: #1a1d27; border-bottom: 1px solid #2e3347; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+header h1 { font-size: 1.15rem; font-weight: 700; color: #6c8ef5; }
+.stats { font-size: 0.82rem; color: #8890aa; display: flex; gap: 16px; }
+.stats b { color: #e8eaf2; }
+
+.filter-bar { background: #1a1d27; border-bottom: 1px solid #2e3347; padding: 12px 24px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.filter-label { font-size: 0.75rem; color: #8890aa; margin-right: 4px; }
+button.tag {
+  background: #21253a; border: 1px solid #2e3347; color: #8890aa;
+  border-radius: 20px; padding: 4px 12px; font-size: 0.75rem; cursor: pointer;
+}
+button.tag:hover { border-color: #6c8ef5; color: #6c8ef5; }
+button.tag.on { background: #6c8ef5; border-color: #6c8ef5; color: #fff; }
+button.tag.all-on { background: #4dd994; border-color: #4dd994; color: #000; }
+
+.type-bar { background: #0f1117; padding: 10px 24px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; border-bottom: 1px solid #1e2130; }
+
+main { max-width: 820px; margin: 0 auto; padding: 28px 20px 60px; }
+
+/* Progress */
+.prog-row { display: flex; justify-content: space-between; font-size: 0.78rem; color: #8890aa; margin-bottom: 6px; }
+.prog-bar { height: 5px; background: #2e3347; border-radius: 3px; margin-bottom: 24px; overflow: hidden; }
+.prog-fill { height: 100%; background: #4dd994; border-radius: 3px; transition: width .4s; }
+
+/* Card */
+.card {
+  background: #21253a; border: 1px solid #2e3347; border-radius: 14px;
+  padding: 36px 40px; min-height: 260px; cursor: pointer;
+  position: relative; margin-bottom: 24px;
+  display: flex; flex-direction: column;
+}
+.card:hover { border-color: #6c8ef5; }
+.card-meta { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; }
+.badge {
+  font-size: 0.68rem; font-weight: 700; letter-spacing: .6px; text-transform: uppercase;
+  padding: 3px 10px; border-radius: 20px;
+}
+.b-concept  { background: #2a3060; color: #6c8ef5; }
+.b-when     { background: #1a3d2e; color: #4dd994; }
+.b-tradeoff { background: #3d2a1a; color: #f5a623; }
+.b-howworks { background: #2d1a3d; color: #c084fc; }
+.b-interview{ background: #3d1a1a; color: #f87171; }
+.topic-label { font-size: 0.72rem; color: #8890aa; }
+
+.question { font-size: 1.25rem; font-weight: 600; line-height: 1.5; color: #e8eaf2; flex: 1; }
+
+.hint { margin-top: 20px; font-size: 0.74rem; color: #555d78; }
+
+/* Answer panel */
+.answer-panel {
+  display: none; margin-top: 24px; padding-top: 20px;
+  border-top: 1px solid #2e3347; font-size: 0.93rem;
+  line-height: 1.75; color: #b8c8ef;
+}
+.answer-panel.show { display: block; }
+.answer-panel strong { color: #4dd994; }
+.answer-panel ul { padding-left: 20px; margin-top: 6px; }
+.answer-panel li { margin-bottom: 5px; }
+.answer-panel ol { padding-left: 20px; margin-top: 6px; }
+.answer-panel code { background: #0d1520; padding: 1px 5px; border-radius: 4px; font-size: 0.87em; color: #a5f3fc; }
+.answer-panel table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 0.87em; }
+.answer-panel td { padding: 5px 8px; border: 1px solid #2e3347; }
+
+/* Controls */
+.controls { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
+.btn { padding: 10px 22px; border-radius: 8px; border: none; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
+.btn-prev { background: #21253a; color: #e8eaf2; border: 1px solid #2e3347; }
+.btn-prev:hover { border-color: #6c8ef5; color: #6c8ef5; }
+.btn-next { background: #6c8ef5; color: #fff; }
+.btn-next:hover { background: #5a7de8; }
+.btn-know { background: #4dd994; color: #000; }
+.btn-know:hover { background: #3bc77d; }
+.btn-nope { background: #21253a; color: #f87171; border: 1px solid #f87171; }
+.btn-nope:hover { background: #3d1a1a; }
+.btn-shuffle { background: transparent; border: 1px solid #2e3347; color: #8890aa; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; }
+.btn-shuffle:hover { border-color: #f5a623; color: #f5a623; }
+.counter { font-size: 0.85rem; color: #8890aa; min-width: 70px; text-align: center; }
+
+.empty { text-align: center; padding: 80px 20px; color: #8890aa; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚡ System Design Flashcards</h1>
+  <div class="stats">
+    <span>Total: <b id="sTotal">0</b></span>
+    <span>Known: <b id="sKnown">0</b></span>
+    <span>Left: <b id="sLeft">0</b></span>
+  </div>
+</header>
+
+<div class="filter-bar">
+  <span class="filter-label">Topic:</span>
+  <button class="tag all-on" data-t="all">All</button>
+  <button class="tag" data-t="API Design">API Design</button>
+  <button class="tag" data-t="Caching">Caching</button>
+  <button class="tag" data-t="CAP Theorem">CAP Theorem</button>
+  <button class="tag" data-t="Consistent Hashing">Consistent Hashing</button>
+  <button class="tag" data-t="Data Modeling">Data Modeling</button>
+  <button class="tag" data-t="DB Indexing">DB Indexing</button>
+  <button class="tag" data-t="Contention">Contention</button>
+  <button class="tag" data-t="Large Blobs">Large Blobs</button>
+  <button class="tag" data-t="Long Running Tasks">Long Running Tasks</button>
+  <button class="tag" data-t="Multi-step Processes">Multi-step Processes</button>
+  <button class="tag" data-t="Networking">Networking</button>
+  <button class="tag" data-t="Numbers to Know">Numbers to Know</button>
+  <button class="tag" data-t="Real-time Updates">Real-time Updates</button>
+  <button class="tag" data-t="Scaling Reads">Scaling Reads</button>
+  <button class="tag" data-t="Scaling Writes">Scaling Writes</button>
+  <button class="tag" data-t="Sharding">Sharding</button>
+</div>
+
+<div class="type-bar">
+  <span class="filter-label">Type:</span>
+  <button class="tag all-on" data-y="all">All</button>
+  <button class="tag" data-y="concept">Concept</button>
+  <button class="tag" data-y="when">When to Use</button>
+  <button class="tag" data-y="tradeoff">Trade-offs</button>
+  <button class="tag" data-y="howworks">How It Works</button>
+  <button class="tag" data-y="interview">Interview Tips</button>
+</div>
+
+<main>
+  <div class="prog-row">
+    <span id="progText">0 / 0 known</span>
+    <span id="progPct">0%</span>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0"></div></div>
+
+  <div id="cardArea"></div>
+
+  <div class="controls" id="ctrls">
+    <button class="btn btn-prev" id="prevBtn">&#8592; Prev</button>
+    <span class="counter" id="counter"></span>
+    <button class="btn btn-next" id="nextBtn">Next &#8594;</button>
+    <button class="btn btn-know" id="knowBtn">&#10003; Know it</button>
+    <button class="btn btn-nope" id="nopeBtn">&#10007; Not yet</button>
+    <button class="btn-shuffle" id="shuffleBtn">&#8646; Shuffle</button>
+  </div>
+</main>
+
+<script>
+var CARDS = [
+  // API DESIGN
+  {t:"API Design",y:"concept",q:"What are the three primary API protocols and when does each apply?",a:"<strong>REST</strong> — HTTP verbs on resource URLs. Default for 90% of cases.<br><strong>GraphQL</strong> — Single endpoint, client specifies exact data shape. Use when mobile/web clients have divergent data needs and over/under-fetching is a real pain.<br><strong>gRPC</strong> — Binary (Protocol Buffers), HTTP/2. Use for internal service-to-service calls requiring high performance.<br><br><strong>Quick rule: Internal &rarr; RPC. Flexible client needs &rarr; GraphQL. Everything else &rarr; REST.</strong>"},
+  {t:"API Design",y:"when",q:"When should you choose GraphQL over REST?",a:"Choose GraphQL when:<ul><li>Different clients (mobile vs. web dashboard) need <strong>different shapes of the same data</strong></li><li>Over-fetching or under-fetching is a real UX/performance problem</li><li>You have a complex, interrelated data graph</li></ul><strong>Don't use it</strong> when you have simple CRUD, a single client type, or the team lacks GraphQL experience."},
+  {t:"API Design",y:"when",q:"When should you use WebSockets or SSE instead of REST?",a:"Use persistent connections when the <strong>server needs to push data to clients proactively</strong>:<ul><li><strong>WebSockets</strong> — bidirectional real-time (chat, live collaboration, multiplayer games)</li><li><strong>SSE</strong> — server-to-client only, simpler (live feeds, notifications, dashboards)</li></ul>REST is request-response only — the client must always initiate. If you need the server to send unprompted updates, REST alone won't work."},
+  {t:"API Design",y:"tradeoff",q:"What are the key trade-offs of REST vs gRPC?",a:"<strong>REST:</strong><ul><li>Universal client support, human-readable, easy to debug</li><li>Stateless, great for public APIs</li><li>Verbose payloads, no streaming by default, slower than binary</li></ul><strong>gRPC:</strong><ul><li>~10x smaller payloads, bidirectional streaming, strong typing</li><li>Auto-generated clients in any language</li><li>Hard to debug (binary), poor browser support, requires Protobuf toolchain</li></ul>"},
+  {t:"API Design",y:"interview",q:"Interview tip: How much time should API design take?",a:"<strong>5 minutes max.</strong> Candidates fail more often by spending too much time here than too little.<br><br>Hit these points quickly:<ol><li>Pick a protocol and justify in one sentence</li><li>Name 2-3 key endpoints with HTTP verbs</li><li>Mention auth (JWT/OAuth) and pagination</li><li>Move on to harder architectural problems</li></ol>"},
+  {t:"API Design",y:"howworks",q:"How does cursor pagination work and why is it preferred over offset?",a:"<strong>Offset pagination:</strong> <code>GET /posts?limit=20&amp;offset=40</code> — simple but slow on large datasets (DB must scan all skipped rows) and inconsistent if rows change.<br><br><strong>Cursor pagination:</strong> <code>GET /posts?after=cursor_token</code> — cursor encodes the last seen record. O(1) seek, consistent even with live data insertions/deletions.<br><br><strong>Default to cursor</strong> for large datasets (Twitter, Facebook feeds)."},
+
+  // CACHING
+  {t:"Caching",y:"concept",q:"What is caching and why does it matter at scale?",a:"Caching stores frequently-accessed data in fast storage (memory) to skip slower storage (disk/DB).<br><br><strong>The gap is dramatic:</strong><ul><li>Postgres read: ~50ms</li><li>Redis read: ~1ms (50x faster)</li></ul>Two purposes: cut response latency, and reduce DB load (preventing it becoming a bottleneck).<br><br>Trade-off: cached data can become <strong>stale</strong>, and a cache failure can expose the DB to a sudden flood."},
+  {t:"Caching",y:"when",q:"When should you reach for caching?",a:"Introduce caching when you see:<ul><li><strong>High read volume</strong> — read:write ratio >= 10:1</li><li><strong>Repeated identical queries</strong> — same data requested by many users</li><li><strong>Expensive computations</strong> — aggregations, recommendations, ML results</li><li><strong>DB approaching limits</strong> — ~50k-100k reads/sec</li></ul><strong>Default first step:</strong> External cache (Redis) before adding read replicas or sharding."},
+  {t:"Caching",y:"howworks",q:"What are the 4 cache write patterns?",a:"<strong>Cache-Aside (Lazy Loading):</strong> App checks cache first, on miss reads DB and populates cache. Most common.<br><br><strong>Write-Through:</strong> Write to cache AND DB synchronously. No stale reads, but higher write latency.<br><br><strong>Write-Behind:</strong> Write to cache, async flush to DB later. Lowest latency, risk of data loss on crash.<br><br><strong>Read-Through:</strong> Cache fetches from DB itself on miss. App always talks only to the cache."},
+  {t:"Caching",y:"tradeoff",q:"What are the three major caching problems and how do you solve them?",a:"<strong>Cache Stampede (Thundering Herd):</strong> Popular key expires, thousands of requests hit DB simultaneously. Fix: probabilistic early expiration, mutex on cache miss, or background refresh before expiry.<br><br><strong>Cache Consistency:</strong> Cache diverges from DB. Fix: short TTLs, write-through pattern, or event-driven invalidation.<br><br><strong>Hot Keys:</strong> One key gets massive traffic. Fix: local in-process cache per server, key replication, or add a random suffix to distribute reads."},
+  {t:"Caching",y:"when",q:"When does each caching layer apply: CDN vs Redis vs in-process?",a:"<strong>CDN (Cloudflare, Fastly):</strong> Public, static or rarely-changing content. Eliminates geographic latency (250ms &rarr; 20ms).<br><br><strong>External cache (Redis):</strong> Shared across all app servers. Default starting point. Scales horizontally. Use for DB query results, sessions, aggregations.<br><br><strong>In-process cache (app memory):</strong> Fastest (no network hop). Not shared across instances. Use only for tiny, rarely-changing config or lookup tables."},
+
+  // CAP THEOREM
+  {t:"CAP Theorem",y:"concept",q:"What does CAP Theorem state and what is the real practical implication?",a:"CAP: any distributed system can guarantee at most 2 of:<ul><li><strong>C</strong>onsistency — every read returns the most recent write (or an error)</li><li><strong>A</strong>vailability — every request gets a response</li><li><strong>P</strong>artition Tolerance — system operates despite network partitions</li></ul><strong>Practical implication:</strong> Network partitions WILL happen. You cannot opt out of P. The real choice is: when a partition occurs, do you sacrifice Consistency (stay available with stale data) or Availability (return an error)?"},
+  {t:"CAP Theorem",y:"when",q:"When do you choose Consistency over Availability (CP)?",a:"Choose <strong>Consistency</strong> when incorrect data is worse than an error:<ul><li><strong>Financial systems</strong> — bank balances, payments (can't show stale balances)</li><li><strong>Inventory</strong> — can't oversell the last item</li><li><strong>Authentication</strong> — revoked tokens must be immediately respected</li><li><strong>Reservation systems</strong> — hotel rooms, airline seats</li></ul>Examples: <strong>HBase, Zookeeper, etcd</strong> — they return errors rather than stale data during partitions."},
+  {t:"CAP Theorem",y:"when",q:"When do you choose Availability over Consistency (AP)?",a:"Choose <strong>Availability</strong> when stale data is acceptable and downtime is worse:<ul><li><strong>Social media feeds</strong> — slightly stale posts are fine</li><li><strong>Product catalogs</strong> — seeing yesterday's price briefly is OK</li><li><strong>Shopping carts</strong> — better to show a stale cart than refuse to load</li><li><strong>DNS</strong> — availability critical, slight staleness tolerated</li></ul>Examples: <strong>Cassandra, DynamoDB, CouchDB</strong> — they return possibly-stale data rather than blocking."},
+  {t:"CAP Theorem",y:"tradeoff",q:"What is the Consistency Spectrum beyond simple CP vs AP?",a:"CAP's binary framing is an oversimplification. Real systems pick a point on the spectrum:<br><br><strong>Linearizability (strongest)</strong> — reads always reflect latest write globally<br><strong>Sequential consistency</strong> — operations appear in some sequential order<br><strong>Causal consistency</strong> — causally related ops are ordered; concurrent ones may not be<br><strong>Eventual consistency (weakest)</strong> — replicas converge given no new writes<br><br>Most DBs let you choose per-operation (DynamoDB strong vs. eventual reads, Cassandra QUORUM vs. ONE)."},
+  {t:"CAP Theorem",y:"interview",q:"How do you use CAP Theorem in an interview?",a:"When choosing a DB, frame your decision explicitly:<br><br>1. Ask: <em>Does this data need strong consistency, or is eventual OK?</em><br>2. State the tradeoff: <em>I'll use Cassandra — we're building a feed where slight staleness is fine and we need high availability.</em><br>3. Or: <em>Payments need strong consistency — PostgreSQL with ACID, accepting brief unavailability during a partition.</em><br><br><strong>Don't pick a DB without explaining the consistency model.</strong> That's what interviewers look for."},
+
+  // CONSISTENT HASHING
+  {t:"Consistent Hashing",y:"concept",q:"What problem does consistent hashing solve?",a:"<strong>Problem:</strong> Simple modulo hashing (<code>hash(key) % N</code>) requires remapping nearly ALL keys when N (number of nodes) changes. Adding/removing a node triggers a massive data migration storm.<br><br><strong>Solution:</strong> Place both nodes and keys on a conceptual ring (hash space 0 to 2^32). Each key goes to the first node clockwise from its position. When a node is added/removed, only ~1/N of keys need to move — not nearly all of them."},
+  {t:"Consistent Hashing",y:"howworks",q:"What are virtual nodes and why are they essential?",a:"Without virtual nodes, consistent hashing causes uneven load — one node might own 40% of the ring, another 5%.<br><br><strong>Virtual nodes:</strong> Each physical server gets multiple positions on the ring (e.g., 100-200 per server). This spreads ownership across many small segments, producing near-uniform distribution.<br><br>Benefits:<ul><li>Even load across heterogeneous hardware</li><li>Smoother migration when nodes join/leave</li><li>Give a bigger server more virtual nodes</li></ul>Used by Cassandra, DynamoDB, Amazon Dynamo."},
+  {t:"Consistent Hashing",y:"when",q:"When should you use consistent hashing?",a:"Use when you need to <strong>distribute data or requests across a dynamic cluster</strong>:<ul><li><strong>Distributed caches</strong> — routing cache keys to specific Redis nodes</li><li><strong>Database sharding</strong> — distributing rows across shards without fixed assignment</li><li><strong>Load balancers with session affinity</strong> — routing same user to same server</li><li><strong>Distributed queues</strong> — partitioning topics across brokers</li></ul>Signal: <em>we need to add/remove nodes without migrating the entire dataset.</em>"},
+  {t:"Consistent Hashing",y:"tradeoff",q:"What are the limitations of consistent hashing?",a:"<strong>Hot spots:</strong> Even with virtual nodes, a popular key (celebrity's data) always maps to the same node. Fix: add a random suffix to distribute reads.<br><br><strong>Data movement on change:</strong> Still requires migrating keys when nodes change, just much less than modulo hashing.<br><br><strong>Complexity:</strong> More complex to implement and reason about than a simple hash table. Use a library rather than implementing from scratch."},
+
+  // DATA MODELING
+  {t:"Data Modeling",y:"concept",q:"What is data modeling in a system design interview?",a:"Data modeling = deciding how data is <strong>structured, stored, and related</strong>: identifying core entities, choosing IDs, and defining relationships.<br><br>Appears twice in an interview:<ol><li><strong>Requirements</strong> — identify core entities (map 1:1 to tables/collections)</li><li><strong>High-Level Design</strong> — sketch a basic schema with key fields, relationships, index notes, and partition hints</li></ol>You're not expected to produce a full ER diagram — show something clear and aligned with requirements."},
+  {t:"Data Modeling",y:"when",q:"When should you choose SQL vs NoSQL?",a:"<strong>Default to SQL (PostgreSQL)</strong> unless requirements clearly say otherwise. The SQL-doesn't-scale myth is exaggerated.<br><br><strong>Use SQL when:</strong> complex joins, strong consistency, well-defined schema, ACID needed.<br><br><strong>Use NoSQL when:</strong><ul><li><strong>Document (MongoDB)</strong> — flexible schema, nested data</li><li><strong>Wide-column (Cassandra)</strong> — high write throughput, time-series</li><li><strong>Key-Value (Redis, DynamoDB)</strong> — simple lookups, caching, sessions</li><li><strong>Graph (Neo4j)</strong> — social graphs, deeply traversed relationships</li></ul>"},
+  {t:"Data Modeling",y:"tradeoff",q:"What are the tradeoffs when denormalizing data?",a:"<strong>Normalized:</strong> Data stored once, no duplication. Requires JOINs. Fast writes, slower complex reads at scale.<br><br><strong>Denormalized:</strong> Data duplicated (e.g., username stored in posts table). No JOINs needed. Faster reads, but:<ul><li>Updates must touch multiple tables</li><li>Storage overhead</li><li>Consistency burden</li></ul><strong>When to denormalize:</strong> Read-heavy workloads where JOIN performance is a proven bottleneck. Common in social feeds and search indices."},
+  {t:"Data Modeling",y:"interview",q:"How should you present your data model in an interview?",a:"Keep it concise. For each entity, show:<ul><li><strong>Primary key</strong> (UUID vs. auto-increment — UUID avoids hotspots in distributed systems)</li><li><strong>Key foreign keys</strong></li><li><strong>2-3 important fields</strong></li><li><strong>Index notes</strong> (e.g., index on user_id and created_at)</li></ul>Example:<br><code>Users: id, username, email, created_at</code><br><code>Posts: id, user_id (FK), content, created_at</code><br><code>Likes: user_id (FK), post_id (FK) [composite PK]</code>"},
+
+  // DB INDEXING
+  {t:"DB Indexing",y:"concept",q:"What is a database index and what does it cost?",a:"An index is a <strong>separate, search-optimized data structure</strong> that lets the DB jump directly to rows instead of scanning every row.<br><br>Without index: <strong>O(n) full table scan</strong><br>With B-Tree index: <strong>O(log n)</strong> — 1M rows = ~20 checks<br><br><strong>Cost (nothing is free):</strong><ul><li>Extra disk space (can be as large as the table)</li><li>Write overhead — every INSERT/UPDATE/DELETE updates all indexes on the table</li></ul><strong>When indexes hurt:</strong> write-heavy logging tables with rare queries; tiny tables where a scan is faster."},
+  {t:"DB Indexing",y:"howworks",q:"What is a B-Tree index and when does it shine?",a:"B-Trees are the <strong>default index type</strong> in virtually every relational DB. They maintain a self-balancing sorted tree that minimizes disk reads.<br><br><strong>Supports:</strong> Range queries, equality lookups, sorting (ORDER BY), prefix matching.<br><br><strong>Doesn't help with:</strong> Full-text search, geospatial queries, LIKE '%keyword%' queries.<br><br>Rule: <em>add B-Tree indexes to every column you frequently WHERE on, JOIN on, or ORDER BY.</em>"},
+  {t:"DB Indexing",y:"howworks",q:"What is an LSM Tree and why do write-heavy databases use it?",a:"LSM (Log-Structured Merge) Trees are used by <strong>Cassandra, RocksDB, LevelDB, HBase</strong>.<br><br>Writes go to an <strong>in-memory buffer (MemTable)</strong> first — no disk seek, extremely fast. When full, flushes to disk as an immutable <strong>SSTable</strong>. Background compaction merges SSTables.<br><br><strong>Advantages:</strong> Sequential disk writes, 10k+ writes/sec on modest hardware.<br><strong>Disadvantages:</strong> Reads are slower (must check multiple SSTables). Compaction causes latency spikes."},
+  {t:"DB Indexing",y:"when",q:"When do you use a composite index vs single-column index?",a:"A <strong>composite index</strong> covers multiple columns: <code>CREATE INDEX ON users(last_name, first_name)</code>.<br><br><strong>Use when:</strong> queries frequently filter or sort on multiple columns together.<br><br><strong>Key rule — column order matters:</strong> the index is useful only when you query on a <em>prefix</em> of the columns. <code>(last_name, first_name)</code> helps <code>WHERE last_name='Smith'</code> but NOT <code>WHERE first_name='John'</code> alone.<br><br><strong>Covering index:</strong> includes all columns the query needs — the DB never touches the main table (index-only scan)."},
+  {t:"DB Indexing",y:"when",q:"When do you use geospatial indexes?",a:"Use geospatial indexes when queries involve <strong>proximity, bounding boxes, or geographic containment</strong>:<ul><li><strong>Geohash:</strong> Encodes lat/lng as a string. Nearby points share a prefix — proximity search becomes a string prefix query. Used in Elasticsearch, Redis GEO. Simplest to implement.</li><li><strong>Quadtree:</strong> Recursively divides space into 4 quadrants. Efficient for point-in-area and dynamic data.</li><li><strong>R-Tree:</strong> Stores minimum bounding rectangles. Best for complex geometries. Used in PostGIS.</li></ul>Interview shortcut: <em>Users near me</em> &rarr; Geohash."},
+
+  // CONTENTION
+  {t:"Contention",y:"concept",q:"What is contention and what causes race conditions?",a:"<strong>Contention</strong> = multiple processes competing for the same resource simultaneously (last concert ticket, auction bid).<br><br><strong>Root cause:</strong> The read and write are two separate steps with a gap. Two processes both read the same value, both decide they can proceed, both write — causing a <strong>lost update</strong>.<br><br>Every solution does the same thing: <strong>close the gap between reading and acting</strong> so no other writer slips in."},
+  {t:"Contention",y:"howworks",q:"What are the 5 solutions to contention?",a:"<strong>1. Conditional Writes:</strong> Enforce the rule in the write itself (<code>UPDATE ... WHERE available > 0</code>). Cheapest, no extra infra.<br><br><strong>2. Pessimistic Locking:</strong> Lock the row before reading (<code>SELECT FOR UPDATE</code>). Guarantees no conflict but blocks concurrent readers.<br><br><strong>3. Optimistic Concurrency (OCC):</strong> Read + version number; write only if version unchanged. Retry on conflict.<br><br><strong>4. Isolation Levels:</strong> SERIALIZABLE prevents write skew. Higher isolation = more locking overhead.<br><br><strong>5. Distributed Locks (Redis SETNX):</strong> Cross-service mutex for when the resource spans multiple services."},
+  {t:"Contention",y:"when",q:"When do you use optimistic vs pessimistic locking?",a:"<strong>Optimistic:</strong> Use when <strong>conflicts are rare</strong>. Version-check on write, retry on conflict. Low overhead under normal load. Bad when collisions are frequent — retry loops waste CPU.<br><br><strong>Pessimistic:</strong> Use when <strong>conflicts are frequent or consequences are severe</strong>. Lock before reading. Guarantees no conflict. Bad under high concurrency — can cause deadlocks.<br><br><strong>Rule:</strong> Online ticket sales &rarr; pessimistic. User profile edits &rarr; optimistic. Financial ledger &rarr; conditional write or pessimistic."},
+  {t:"Contention",y:"tradeoff",q:"What is write skew and when does it occur?",a:"Write skew is when two transactions each read overlapping data, make decisions based on what they read, both write without violating individual constraints — but the combined result violates a business rule.<br><br><strong>Example:</strong> On-call system requires at least 1 doctor. Alice and Bob both read 2 doctors on call, both decide it's safe to go off-call, both update. Result: 0 doctors on call.<br><br><strong>Fix:</strong> Use <code>SERIALIZABLE</code> isolation, or <code>SELECT FOR UPDATE</code> to lock the rows both transactions read."},
+
+  // LARGE BLOBS
+  {t:"Large Blobs",y:"concept",q:"What is the core problem with storing large files and what's the solution?",a:"<strong>Problem:</strong> Routing large files through app servers is an anti-pattern. Every byte travels: Client &rarr; API Gateway &rarr; App Server &rarr; Blob Storage. App servers become expensive pipes adding latency with zero business logic contribution.<br><br><strong>Solution — Presigned URLs:</strong> Server shifts from <em>data mover</em> to <em>access controller</em>. Server validates the request, generates a short-lived presigned URL, and steps aside. The client uploads/downloads directly to/from blob storage (S3), bypassing your servers entirely."},
+  {t:"Large Blobs",y:"howworks",q:"How do presigned URLs work for upload and download?",a:"<strong>Upload flow:</strong><ol><li>Client requests an upload URL from API server</li><li>Server validates permissions, generates a presigned PUT URL (e.g., S3 presigned URL, expires in 15 min)</li><li>Client uploads directly to blob storage — no bytes touch your app server</li><li>Blob storage notifies server on completion; server updates DB metadata</li></ol><strong>Download flow:</strong> Server issues a presigned GET URL; client fetches directly from CDN/S3.<br><br>Security: Presigned URLs are time-limited and scoped to a specific operation."},
+  {t:"Large Blobs",y:"when",q:"When should you use chunked/resumable uploads?",a:"Use chunked uploads when files are:<ul><li><strong>Large (100MB+)</strong> — a failed 99% upload shouldn't require starting over</li><li><strong>Uploaded over unreliable connections</strong> — mobile networks</li><li><strong>Requiring progress visibility</strong> — users expect a progress bar</li></ul>File is split into chunks (e.g., 5MB each). Each chunk is uploaded independently. On failure, only missing chunks are re-sent.<br><br>S3 Multipart Upload and Google Resumable Upload APIs provide this natively."},
+  {t:"Large Blobs",y:"tradeoff",q:"What consistency problem arises with direct blob uploads?",a:"The metadata DB and blob storage can fall out of sync:<ul><li>Client uploads to S3 but never calls the completion endpoint &rarr; orphaned blob</li><li>Server marks file uploaded in DB but S3 upload failed &rarr; broken reference</li></ul><strong>Solutions:</strong><ol><li><strong>Pending state:</strong> Create DB record with status=pending before issuing the URL. Transition to active only after confirmed upload.</li><li><strong>S3 event notifications:</strong> Trigger a Lambda/webhook on successful upload to confirm in DB.</li><li><strong>Periodic reconciliation:</strong> Background job marks stale pending records as failed.</li></ol>"},
+
+  // LONG RUNNING TASKS
+  {t:"Long Running Tasks",y:"concept",q:"Why does synchronous HTTP fail for long-running tasks?",a:"Typical web-server and load-balancer timeouts are <strong>30-60 seconds</strong>. Operations like PDF generation, video transcoding, or large CSV imports take <strong>45 seconds to several minutes</strong>.<br><br>Even when they complete in time:<ul><li>Browser freezes with no progress feedback</li><li>Users assume failure and click again &rarr; duplicate work</li><li>No clean way to send async notifications (email, push)</li></ul>The deeper issue: expensive operations can't scale independently from web servers."},
+  {t:"Long Running Tasks",y:"howworks",q:"How does the async worker pool pattern work?",a:"<strong>Phase 1 (milliseconds) — Web server:</strong><ol><li>Validates the request</li><li>Creates a job record in DB with status <code>pending</code></li><li>Pushes a message (just the job ID) to a queue (SQS, Redis BullMQ)</li><li>Returns the job ID to the client immediately</li></ol><strong>Phase 2 (background) — Workers:</strong><ol><li>Workers continuously poll the queue</li><li>Pull a job, execute the heavy work</li><li>Store results (e.g., S3)</li><li>Update job status to <code>completed</code> or <code>failed</code></li><li>Notify user (email, WebSocket, push)</li></ol>"},
+  {t:"Long Running Tasks",y:"when",q:"When should you use async workers vs keeping it synchronous?",a:"<strong>Use async when:</strong><ul><li>Operation takes more than 5-10 seconds</li><li>Different hardware is needed (GPU for video, high-memory for reports)</li><li>The user doesn't need the result immediately</li><li>Work needs retry logic on failure</li></ul><strong>Keep synchronous when:</strong> Operation completes under 200ms, user needs immediate feedback (search, auth), or overhead of queuing isn't justified.<br><br><em>Example:</em> 1-row PDF &rarr; sync. 10M-row analytics report &rarr; async."},
+  {t:"Long Running Tasks",y:"howworks",q:"How does a client receive completion notifications?",a:"<strong>Option 1 — Polling:</strong> Client calls <code>GET /jobs/{id}</code> every N seconds. Simple, wastes requests. Use exponential backoff.<br><br><strong>Option 2 — WebSocket:</strong> Client opens a persistent WS connection. Server pushes completion event when worker finishes. Best UX, requires WS-aware infrastructure.<br><br><strong>Option 3 — SSE:</strong> Server streams updates over persistent HTTP. Simpler than WS for one-way push.<br><br><strong>Option 4 — Email/Push:</strong> For very long tasks (hours). User is not waiting at a screen."},
+
+  // MULTI-STEP PROCESSES
+  {t:"Multi-step Processes",y:"concept",q:"What is the core challenge of multi-step distributed processes?",a:"Unlike a single DB transaction, real workflows span multiple services — any can fail or time out. If the orchestrating server crashes mid-process, all progress is lost.<br><br>The challenge: <strong>what do you do when step 3 of 5 fails?</strong> You need to undo steps 1 and 2 (compensate). Without proper tooling, this becomes a tangled mess of state machines and retry logic hand-rolled in application code."},
+  {t:"Multi-step Processes",y:"howworks",q:"What is the Saga pattern and how does it differ from 2PC?",a:"<strong>2PC (Two-Phase Commit):</strong> All-or-nothing atomicity. Coordinator asks participants to PREPARE, then COMMIT/ABORT. Holds locks across all participants. If coordinator crashes &rarr; participants hold locks indefinitely.<br><br><strong>Saga pattern:</strong> Breaks operation into independently-committed steps. Each step commits immediately. On failure, runs <em>compensating transactions</em> to undo earlier steps.<br><br>Key difference: Sagas allow <strong>temporary inconsistency</strong> but avoid cross-service locking. More resilient to crashes."},
+  {t:"Multi-step Processes",y:"when",q:"When should you recommend Temporal in a system design interview?",a:"Recommend Temporal when you spot:<ul><li>A stateful multi-step process with failure handling requirements</li><li><em>If step X fails, undo step Y</em></li><li>Long-running processes (hours/days) that must survive server crashes</li><li>Human-in-the-loop steps (wait for driver to accept, user to sign a document)</li></ul><strong>Concrete scenarios:</strong> payment systems, order fulfillment, ride-matching (Uber).<br><br><strong>Default: Temporal</strong> unless there's a reason to prefer a managed cloud service like AWS Step Functions."},
+  {t:"Multi-step Processes",y:"when",q:"When should you NOT use workflow systems?",a:"Don't over-engineer. Avoid when:<ul><li><strong>Simple async tasks</strong> — resize an image, send one email &rarr; use a simple job queue</li><li><strong>Synchronous low-latency operations</strong> — user-facing APIs that must complete in under 200ms</li><li><strong>High-frequency simple operations</strong> — logging, metrics &rarr; engine overhead not justified</li></ul>Signal to introduce a workflow engine: you find yourself <strong>manually building</strong> what they already provide — durable state, orchestration of multiple services, saga compensation logic in Redis."},
+  {t:"Multi-step Processes",y:"howworks",q:"How does Temporal guarantee a workflow survives a worker crash?",a:"Temporal intercepts each activity call and <strong>records it in an append-only history database</strong>. If the worker crashes mid-workflow, Temporal replays the workflow from recorded history on a new worker — re-executing code up to the last completed activity, then continuing.<br><br>Key requirement: <strong>activities must be idempotent</strong> (safe to call more than once) because replay re-runs all code up to the crash point.<br><br>Architecture: Temporal Server + History DB (append-only log) + Workflow Workers + Activity Workers."},
+
+  // NETWORKING
+  {t:"Networking",y:"concept",q:"What are the 3 OSI layers most relevant to system design?",a:"<strong>Layer 3 — Network (IP):</strong> Handles routing, addressing, best-effort delivery. Packets can be lost, duplicated, reordered. No guarantees.<br><br><strong>Layer 4 — Transport (TCP/UDP/QUIC):</strong> TCP adds reliability + ordering over IP. UDP is connectionless — fast but unreliable. QUIC = UDP speed + TLS + multiplexing.<br><br><strong>Layer 7 — Application (HTTP, WebSockets, gRPC, DNS):</strong> What developers interact with directly, built on top of TCP/UDP. Flexible, runs in user space."},
+  {t:"Networking",y:"howworks",q:"What happens during a full HTTP request-response cycle?",a:"<ol><li><strong>DNS resolution</strong> — domain &rarr; IP address (cached at multiple levels)</li><li><strong>TCP 3-way handshake</strong> — SYN &rarr; SYN-ACK &rarr; ACK (1 round trip)</li><li><strong>TLS handshake</strong> — adds 1-2 more round trips (if HTTPS)</li><li><strong>HTTP request/response</strong> — actual application data</li><li><strong>TCP 4-way teardown</strong> — FIN/ACK/FIN/ACK</li></ol><strong>HTTP/2</strong> multiplexes multiple requests over one TCP connection. <strong>HTTP/3 (QUIC)</strong> moves to UDP, eliminating TCP handshake overhead entirely."},
+  {t:"Networking",y:"when",q:"Layer 4 vs Layer 7 load balancers — when do you use each?",a:"<strong>Layer 4 (Transport):</strong> Routes based on IP + TCP port only. Extremely fast, minimal overhead. Use for: raw TCP traffic, ultra-high throughput, when you can't decrypt TLS at the LB.<br><br><strong>Layer 7 (Application):</strong> Inspects HTTP headers, URLs, cookies. Can route /api/* to one service, /static/* to another. SSL termination, sticky sessions, A/B routing.<br><br><strong>Default recommendation:</strong> L7 (nginx, HAProxy, AWS ALB) for web services. Use L4 (AWS NLB) for non-HTTP workloads or extreme throughput."},
+  {t:"Networking",y:"howworks",q:"What is a circuit breaker and why is it critical?",a:"A circuit breaker prevents cascading failures when a downstream service is degraded.<br><br><strong>States:</strong><ul><li><strong>Closed (normal):</strong> Requests flow through, error rate monitored.</li><li><strong>Open (tripped):</strong> Error rate exceeded threshold. All requests fail-fast immediately.</li><li><strong>Half-open:</strong> After a timeout, a probe request is sent. Success &rarr; Closed. Failure &rarr; Open.</li></ul><strong>Why essential:</strong> Without it, one slow service makes all callers pile up with blocked threads, exhausting their thread pools and bringing them down too — cascading failure."},
+
+  // NUMBERS TO KNOW
+  {t:"Numbers to Know",y:"concept",q:"What are the key hardware limits to know for modern system design?",a:"Modern cloud instances are extraordinary:<br><br><strong>Memory:</strong> Up to 24 TB RAM per instance. General purpose: 512 GB.<br><strong>Storage:</strong> 60 TB NVMe SSD, 336 TB HDD. S3: effectively unlimited.<br><strong>Network:</strong> 25-100 Gbps within datacenter.<br><strong>Latency:</strong> &lt;1ms same AZ, 1-2ms cross-AZ, 50-150ms cross-region.<br><br><strong>Key implication:</strong> Advice to shard at 100GB or avoid large in-memory objects comes from a world that no longer exists. Many problems needing complex distributed architectures now run on a single well-tuned node."},
+  {t:"Numbers to Know",y:"concept",q:"What are the key DB and cache throughput numbers?",a:"<strong>PostgreSQL (well-tuned):</strong> ~50k-100k reads/sec before needing horizontal scaling.<br><br><strong>Cassandra:</strong> 10k+ writes/sec on modest hardware (LSM tree sequential writes).<br><br><strong>Redis:</strong> Up to 1 TB per instance, hundreds of thousands of ops/sec, sub-ms latency.<br><br><strong>Rule of thumb:</strong> A single DB needs to scale horizontally (or gain a cache) at ~50k-100k reads/sec with proper indexing in place."},
+  {t:"Numbers to Know",y:"interview",q:"How should you use back-of-the-envelope calculations?",a:"Use napkin math to justify architectural decisions:<ol><li><strong>State assumptions:</strong> <em>Assuming 10M DAU, 5 reads/day each...</em></li><li><strong>Calculate load:</strong> 10M x 5 / 86,400 = ~580 reads/sec</li><li><strong>Compare to limits:</strong> Single Postgres handles ~50k reads/sec &rarr; one DB is fine</li><li><strong>Make a decision:</strong> <em>At this scale, a single replicated DB with read replicas and Redis is sufficient</em></li></ol>Strong candidates use numbers to <strong>justify NOT adding complexity</strong> (avoiding premature optimization) as much as to justify adding it."},
+
+  // REAL-TIME UPDATES
+  {t:"Real-time Updates",y:"concept",q:"What is the two-hop framework for real-time systems?",a:"Every real-time system has two distinct communication hops:<br><br><strong>Hop 1 — Server &rarr; Client:</strong> How do updates reach the end user? Options: polling, long polling, SSE, WebSockets, WebRTC.<br><br><strong>Hop 2 — Source &rarr; Server:</strong> How does the server learn about updates? Options: poll DB, consistent hashing (sticky routing), pub/sub (Redis, Kafka).<br><br><strong>Common mistake:</strong> Only designing Hop 1. You must also explain how the right server node learns about the update."},
+  {t:"Real-time Updates",y:"howworks",q:"Compare the 5 client-server protocols for real-time updates.",a:"<strong>Simple Polling:</strong> Client requests every N seconds. Simple, but wastes bandwidth.<br><br><strong>Long Polling:</strong> Server holds the request until data is available. Reduces wasted requests. HTTP-compatible.<br><br><strong>SSE:</strong> Persistent one-way HTTP stream (server &rarr; client). Auto-reconnects. Good for notifications.<br><br><strong>WebSockets:</strong> Full-duplex persistent connection. Best for interactive real-time (chat, games).<br><br><strong>WebRTC:</strong> Peer-to-peer. Ultra-low latency video/audio. Complex setup (STUN/TURN servers)."},
+  {t:"Real-time Updates",y:"when",q:"Which real-time protocol should you choose?",a:"<strong>Need bidirectional real-time?</strong> &rarr; WebSockets (chat, multiplayer, collaboration)<br><br><strong>Server pushes to client, no reply needed?</strong> &rarr; SSE (live scores, notifications, dashboards)<br><br><strong>Peer-to-peer low-latency video/audio?</strong> &rarr; WebRTC<br><br><strong>Simple, infrequent updates?</strong> &rarr; Long polling<br><br><strong>Common mistake:</strong> Jumping straight to WebSockets for everything. SSE handles 90% of push-notification use cases with far less infrastructure complexity."},
+  {t:"Real-time Updates",y:"howworks",q:"What are the server-side (Hop 2) options for triggering updates?",a:"<strong>Option 1 — Server polls DB:</strong> Simple, no extra infra. Server checks DB every N seconds. Works for low-frequency updates. Adds DB load.<br><br><strong>Option 2 — Consistent hashing (sticky routing):</strong> Route all connections for a given entity to the same server. That server pushes directly when a write arrives. No cross-server coordination needed.<br><br><strong>Option 3 — Pub/Sub (Redis, Kafka):</strong> On update, publish an event. All servers subscribed receive it and push to their connected clients. Scales to many server nodes. Default for large-scale systems."},
+
+  // SCALING READS
+  {t:"Scaling Reads",y:"concept",q:"Why do databases struggle with read-heavy workloads?",a:"Modern apps are inherently read-heavy (10:1 to 100:1 read:write ratio). As concurrent reads multiply, the DB hits physical limits: CPU, memory, disk I/O.<br><br><strong>Progression of solutions:</strong><ol><li><strong>Optimize within the DB</strong> — indexes, query optimization</li><li><strong>Scale horizontally</strong> — read replicas, sharding</li><li><strong>Add external caching</strong> — Redis, CDN</li></ol>Rule: scale horizontally once you exceed <strong>~50k-100k reads/sec</strong> with proper indexing in place."},
+  {t:"Scaling Reads",y:"howworks",q:"How do read replicas work and what are their limitations?",a:"<strong>Read replicas:</strong> Additional DB instances replicating from a primary. Reads distributed across replicas; writes go only to primary.<br><br><strong>Benefits:</strong> Each replica handles its own read load. 3-5x read throughput with 2-4 replicas.<br><br><strong>Limitations:</strong><ul><li><strong>Replication lag:</strong> Replicas are slightly behind (usually ms, can be seconds under heavy writes). Reads may return stale data.</li><li><strong>Write bottleneck remains:</strong> Primary still handles all writes.</li><li><strong>Not a substitute for caching:</strong> Replicas still hit disk; Redis is 50x faster.</li></ul>"},
+  {t:"Scaling Reads",y:"when",q:"When should you add a CDN vs Redis cache?",a:"<strong>CDN:</strong> Use for <strong>publicly accessible, geographically distributed content</strong>:<ul><li>Static assets (images, CSS, JS)</li><li>Public API responses that don't change per user</li><li>HTML pages with moderate freshness requirements</li></ul>CDN edge nodes serve users nearby — 250ms origin latency &rarr; 20ms.<br><br><strong>Redis:</strong> Use for <strong>application-level, potentially user-specific hot data</strong>:<ul><li>DB query results, session data, computed aggregations</li><li>Data that changes and must be explicitly invalidated</li></ul>"},
+
+  // SCALING WRITES
+  {t:"Scaling Writes",y:"concept",q:"What makes scaling writes harder than scaling reads?",a:"Reads can be scaled by adding stateless replicas. Writes are harder because:<ul><li>All writes must be <strong>coordinated</strong> — two nodes can't both accept a write to the same row without conflict resolution</li><li>Write performance trades off against read performance</li><li>Writes are often <strong>bursty</strong> — flash sales, viral events, batch jobs</li><li>Writes require <strong>disk I/O</strong> (durable commit) which is slower than memory</li></ul>The article identifies 4 strategies that must be combined."},
+  {t:"Scaling Writes",y:"howworks",q:"What are the 4 write-scaling strategies?",a:"<strong>1. Vertical Scaling + DB Choice:</strong> Exhaust what existing hardware can do first. Use math. Switch to write-optimized DB if needed (Cassandra for append-heavy).<br><br><strong>2. Sharding:</strong> Split data across multiple DB nodes. Each shard handles writes for its subset.<br><br><strong>3. Queues + Load Shedding:</strong> Buffer bursty writes in a queue (SQS, Kafka). Workers drain at a controlled rate.<br><br><strong>4. Batching + Hierarchical Aggregation:</strong> Aggregate writes in memory before flushing. E.g., buffer 1000 likes and write <code>SET likes = likes + 1000</code> once."},
+  {t:"Scaling Writes",y:"when",q:"When should you use a write queue (Kafka, SQS) to scale writes?",a:"Use a queue when:<ul><li>Traffic is <strong>spiky and unpredictable</strong> — queue acts as shock absorber</li><li>Some write latency is acceptable (eventual durability)</li><li>Multiple downstream consumers need to process each write (fan-out)</li><li>You want to <strong>decouple producers from consumers</strong></li></ul><strong>Examples:</strong> User activity events, log ingestion, notification fan-out, analytics pipelines.<br><br><strong>Don't use for:</strong> Writes that must be immediately readable, or where user expects synchronous confirmation (bank transfer, checkout)."},
+  {t:"Scaling Writes",y:"tradeoff",q:"What are the write-scaling tradeoffs between database types?",a:"<strong>Cassandra:</strong> LSM tree sequential writes, 10k+ writes/sec. Trade-off: read amplification (check multiple SSTables).<br><br><strong>ClickHouse:</strong> Columnar storage, excellent for bulk inserts and analytics. Trade-off: poor for row-level random reads.<br><br><strong>PostgreSQL:</strong> ACID with good write perf. Trade-off: B-tree updates add overhead vs LSM.<br><br><strong>Kafka:</strong> Sequential disk appends, millions of events/sec. Trade-off: not a query engine — consumers must process events."},
+
+  // SHARDING
+  {t:"Sharding",y:"concept",q:"What is sharding vs partitioning?",a:"<strong>Partitioning:</strong> Splits data within <em>one</em> database instance into logical chunks. Still one machine. Reduces table scan scope and improves maintenance.<br><br><strong>Sharding:</strong> Horizontal partitioning across <em>multiple independent machines</em>. Each shard has its own CPU, memory, disk, connection pool. True horizontal scale — storage and throughput scale linearly as you add shards.<br><br><strong>In interviews, be explicit.</strong> Say <em>shard across 4 nodes</em> vs <em>partition by date within Postgres</em> — they solve different scale problems."},
+  {t:"Sharding",y:"howworks",q:"What are the main sharding strategies and their tradeoffs?",a:"<strong>Range-based:</strong> Shard by value ranges (IDs 0-10M &rarr; Shard 1). Simple. Risk: hot spots (new users always go to latest shard).<br><br><strong>Hash-based:</strong> <code>hash(key) % N</code>. Uniform distribution. Problem: adding/removing shards requires massive remapping. Fix: use consistent hashing.<br><br><strong>Directory-based:</strong> A lookup service maps keys to shards. Most flexible. But the lookup service becomes a bottleneck and SPOF.<br><br><strong>Geo-based:</strong> Shard by geography. Data sovereignty compliance, reduced latency. Complex cross-region queries."},
+  {t:"Sharding",y:"when",q:"How do you choose a shard key?",a:"A good shard key:<ul><li><strong>High cardinality</strong> — many distinct values</li><li><strong>Even distribution</strong> — no single value dominates</li><li><strong>Aligns with access patterns</strong> — queries that include the shard key hit one shard</li></ul><strong>Bad shard keys:</strong><ul><li><strong>Timestamp as sole key</strong> &rarr; all writes go to the latest shard (hot spot)</li><li><strong>Low cardinality</strong> (e.g., 5 countries) &rarr; can't have more than 5 shards</li><li><strong>Random</strong> &rarr; uniform distribution but every query must fan out to all shards</li></ul>"},
+  {t:"Sharding",y:"tradeoff",q:"What problems does sharding introduce?",a:"<strong>Cross-shard queries:</strong> Queries without the shard key must fan out to all shards and merge results. Very expensive. Fix: design queries to always include the shard key; denormalize where necessary.<br><br><strong>Cross-shard transactions:</strong> ACID across shards requires 2PC or Saga. Avoid by keeping related data on the same shard.<br><br><strong>Resharding:</strong> Adding a shard requires moving data. Consistent hashing minimizes migration. Use dual-write during transition.<br><br><strong>Operational complexity:</strong> Multiple DBs to monitor and back up. Use Vitess (MySQL) or Citus (Postgres) to manage this."}
+];
+
+var activeTopic = "all";
+var activeType  = "all";
+var deck        = [];
+var idx         = 0;
+var known       = {};  // index -> true
+var showing     = false;
+
+function buildDeck() {
+  var out = [];
+  for (var i = 0; i < CARDS.length; i++) {
+    var c = CARDS[i];
+    if (activeTopic !== "all" && c.t !== activeTopic) continue;
+    if (activeType  !== "all" && c.y !== activeType)  continue;
+    out.push(i);
+  }
+  deck = out;
+  idx  = 0;
+  showing = false;
+}
+
+function shuffle() {
+  for (var i = deck.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = deck[i]; deck[i] = deck[j]; deck[j] = tmp;
+  }
+  idx = 0;
+  showing = false;
+}
+
+function updateStats() {
+  var knownCount = 0;
+  for (var i = 0; i < deck.length; i++) {
+    if (known[deck[i]]) knownCount++;
+  }
+  var total = deck.length;
+  var pct   = total ? Math.round(knownCount / total * 100) : 0;
+  document.getElementById("sTotal").textContent = total;
+  document.getElementById("sKnown").textContent = knownCount;
+  document.getElementById("sLeft").textContent  = total - knownCount;
+  document.getElementById("progText").textContent = knownCount + " / " + total + " known";
+  document.getElementById("progPct").textContent  = pct + "%";
+  document.getElementById("progFill").style.width = pct + "%";
+}
+
+var typeBadge = { concept:"b-concept", when:"b-when", tradeoff:"b-tradeoff", howworks:"b-howworks", interview:"b-interview" };
+var typeLabel = { concept:"Concept", when:"When to Use", tradeoff:"Trade-off", howworks:"How It Works", interview:"Interview Tip" };
+
+function render() {
+  var area  = document.getElementById("cardArea");
+  var ctrls = document.getElementById("ctrls");
+
+  if (!deck.length) {
+    area.innerHTML = '<div class="empty">No cards match the current filters.</div>';
+    ctrls.style.display = "none";
+    updateStats();
+    return;
+  }
+
+  ctrls.style.display = "flex";
+  var cardIdx = deck[idx];
+  var c       = CARDS[cardIdx];
+  var isKnown = known[cardIdx] ? true : false;
+
+  area.innerHTML =
+    '<div class="card" id="theCard" style="border-color:' + (isKnown ? "#4dd994" : "#2e3347") + '">' +
+      '<div class="card-meta">' +
+        '<span class="badge ' + typeBadge[c.y] + '">' + typeLabel[c.y] + '</span>' +
+        '<span class="topic-label">' + c.t + (isKnown ? ' &nbsp;&#10003; Known' : '') + '</span>' +
+      '</div>' +
+      '<div class="question">' + c.q + '</div>' +
+      '<div class="hint">Click card to reveal answer</div>' +
+      '<div class="answer-panel" id="ans">' + c.a + '</div>' +
+    '</div>';
+
+  document.getElementById("theCard").onclick = function() {
+    showing = !showing;
+    var el = document.getElementById("ans");
+    el.className = "answer-panel" + (showing ? " show" : "");
+    document.querySelector(".hint").style.display = showing ? "none" : "block";
+  };
+
+  document.getElementById("counter").textContent = (idx + 1) + " / " + deck.length;
+  document.getElementById("knowBtn").textContent = isKnown ? "✓ Known" : "✓ Know it";
+  updateStats();
+}
+
+// Controls
+document.getElementById("nextBtn").onclick = function() {
+  if (deck.length) { idx = (idx + 1) % deck.length; showing = false; render(); }
+};
+document.getElementById("prevBtn").onclick = function() {
+  if (deck.length) { idx = (idx - 1 + deck.length) % deck.length; showing = false; render(); }
+};
+document.getElementById("shuffleBtn").onclick = function() {
+  shuffle(); render();
+};
+document.getElementById("knowBtn").onclick = function() {
+  var cardIdx = deck[idx];
+  if (known[cardIdx]) { delete known[cardIdx]; }
+  else { known[cardIdx] = true; idx = (idx + 1) % deck.length; showing = false; }
+  render();
+};
+document.getElementById("nopeBtn").onclick = function() {
+  var cardIdx = deck[idx];
+  delete known[cardIdx];
+  idx = (idx + 1) % deck.length;
+  showing = false;
+  render();
+};
+
+// Topic filters
+document.querySelectorAll("[data-t]").forEach(function(btn) {
+  btn.onclick = function() {
+    document.querySelectorAll("[data-t]").forEach(function(b) { b.className = "tag"; });
+    btn.className = activeTopic === "all" && btn.dataset.t === "all" ? "tag all-on" : "tag on";
+    if (btn.dataset.t === "all") btn.className = "tag all-on";
+    else btn.className = "tag on";
+    activeTopic = btn.dataset.t;
+    buildDeck(); render();
+  };
+});
+
+// Type filters
+document.querySelectorAll("[data-y]").forEach(function(btn) {
+  btn.onclick = function() {
+    document.querySelectorAll("[data-y]").forEach(function(b) { b.className = "tag"; });
+    if (btn.dataset.y === "all") btn.className = "tag all-on";
+    else btn.className = "tag on";
+    activeType = btn.dataset.y;
+    buildDeck(); render();
+  };
+});
+
+// Keyboard shortcuts
+document.addEventListener("keydown", function(e) {
+  if (e.key === "ArrowRight" || e.key === "l") document.getElementById("nextBtn").click();
+  else if (e.key === "ArrowLeft" || e.key === "h") document.getElementById("prevBtn").click();
+  else if (e.key === " " || e.key === "Enter") { e.preventDefault(); var c = document.getElementById("theCard"); if (c) c.click(); }
+  else if (e.key === "k") document.getElementById("knowBtn").click();
+  else if (e.key === "x") document.getElementById("nopeBtn").click();
+});
+
+// Init
+buildDeck();
+render();
+</script>
+</body>
+</html>
